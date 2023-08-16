@@ -34,6 +34,13 @@ However, if we want to make uploads of large files (larger than 100MB each) to S
 
 When uploading a very large file to AWS S3 (> 100GB) from a server/instance/VM, you should split the file and then upload its parts in parallel using the [Multipart file Upload](https://docs.aws.amazon.com/cli/latest/reference/s3api/upload-part.html) tool provided by AWS. That way, if you lose connection for a reason, you'll be able to resume the upload with no problems. Also, using the prefix `--content-md5`, you can check the content of the uploaded file and compare it with your local file.
 
+To see how fast multi-upload in parellel is, it takes about half the time than uploading the file as one big object:
+```
+real    3m3.273s
+user    13m40.810s
+sys     3m23.346s
+```
+
 ### Steps to use this script
 
 1. Create a large 100GB file in Linux, e.g `truncate --size 100G 100GBFile`
@@ -44,9 +51,7 @@ When uploading a very large file to AWS S3 (> 100GB) from a server/instance/VM, 
    
 The script will start reading your current directory for files with names that begin with `x`, will take the MD5 checksum of them and parse it to the S3 API as the `--content-md5` parameter, and then it will start uploading each file to the specified `bucket`.
 It uploads parts/files in parallel, set by the value `N`. So if set to 10, it will upload 10 parts at a time. 
-When completed it
-The outputs will be sent to a log file.
-Make sure to save that log file, you'll need the `ETag` output later on.
+
 
 An example of the output of the script:
 

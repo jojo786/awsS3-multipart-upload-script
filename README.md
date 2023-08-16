@@ -6,16 +6,16 @@
 To test this, I've created a 100GB file in Linux, and timed each upload from different EC2 instances (in the same region as the S3 bucket) of type [r5n](https://aws.amazon.com/ec2/instance-types/r5) - which has 50Gbps of network bandwidth - and on average it took just under 6 minutes to upload a large 100GB file.
 
 ```
-ec2-user@ip-172-31-36-108 ~]$ time aws s3 cp 100GFile s3://mytestbucket
-upload: ./100GFile to s3://mytestbucket/100GFile
+ec2-user@ip-172-31-36-108 ~]$ time aws s3 cp 100GBFile s3://mytestbucket
+upload: ./100GBFile to s3://mytestbucket/100GBFile
  
 real        5m44.163s
 user       9m50.626s
 sys          4m52.425s
  
  
-[ec2-user@ip-172-31-40-61 ~]$ time aws s3 cp 100GFile2 s3://mytestbucket
-upload: ./100GFile2 to s3://mytestbucket/100GFile2
+[ec2-user@ip-172-31-40-61 ~]$ time aws s3 cp 100GBFile2 s3://mytestbucket
+upload: ./100GBFile2 to s3://mytestbucket/100GBFile2
  
 real        5m35.630s
 user       9m38.756s
@@ -36,11 +36,11 @@ When uploading a very large file to AWS S3 (> 100GB) from a server/instance/VM, 
 
 ### Steps to use this script
 
-1. Create a large 100GB file in Linux, e.g `truncate --size 100G 100GFile`
-2. Split it into 100MB parts with `split -b 100M 100GFile` - this will create lots of 100MB files each with names that begin with `x`
+1. Create a large 100GB file in Linux, e.g `truncate --size 100G 100GBFile`
+2. Split it into 100MB parts with `split -b 100M 100GBFile` - this will create lots of 100MB files each with names that begin with `x`
 3. Set permissions: `chmod +x multipart-file-upload-s3.sh`
 4. Create the `logs` directory: `cd awsS3-multipart-upload-script && mkdir logs`
-5. Run: `time ./multipartupload.sh LargeFile mybucket 10` - See **variables** below for more information.
+5. Run: `time ./multipartupload.sh 100GBFile mybucket 10` - See **variables** below for more information.
    
 The script will start reading your current directory for files with names that begin with `x`, will take the MD5 checksum of them and parse it to the S3 API as the `--content-md5` parameter, and then it will start uploading each file to the specified `bucket`.
 It uploads parts/files in parallel, set by the value `N`. So if set to 10, it will upload 10 parts at a time. 

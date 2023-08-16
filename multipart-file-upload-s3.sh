@@ -2,20 +2,31 @@
 #
 #
 
-set -x
+N=10
 
-bucket=multipart-file-upload-bucket-test
-profile='test-aws-profile'
-upload_id='1B________Tw--' # Hidden for security reasons.
-key='large_test_file'
+key=$1
+bucket=adaptittest1
+echo "Creating multipart upload_id: "
+
+upload_id=`aws s3api create-multipart-upload --bucket ${bucket} --key $key | jq -r '.UploadId'`
+echo $upload_id
+
+echo "uploading parts concurrently in batches of N=" $10
 
 part_number=0
 
-for f in /home/lucas/aws-upload-test/files/x/*; do
+#list files in the current directory that begin with x
+for f in `ls x*`
+do
   ((part_number = part_number + 1))
+  echo "upload part " $part_number
   md5=$(openssl md5 -binary "${f}" | base64)
-  aws s3api upload-part --bucket ${bucket} --key $key --profile $profile --part-number $part_number --body "${f}" --upload-id ${upload_id} --content-md5 "${md5}" | tee -a logs/upload-part.$part_number-s3.log
-  # shellcheck disable=SC1003
-  # shellcheck disable=SC2002
-  cat logs/upload-part.$part_number-s3.log | awk -F'"' '{print $5}' | cut -f 1 -d '\' | awk NF | awk '{ print "{\"ETag\":\"" $1 "\",\"PartNumber\": '$part_number' }," }' >> logs/output-test.json
+  aws s3api upload-part --bucket ${bucket} --key $key --part-number $part_number --body "${f}" --upload-id ${upload_id} --content-md5 "${md5}" | tee -a logs/upload-part.$part_number-s3.log
+  if [[ $(jobs -r -p | wc -l) -ge $N ]]; then wait -n; fi
 done
+
+
+echo "completing multipart upload"
+aws s3api complete-multipart-upload --multipart-upload file://upload-part-all.json --bucket ${bucket} --key ${key} --upload-id ${upload_id}
+
+echo "DONE"

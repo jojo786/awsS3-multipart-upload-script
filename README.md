@@ -23,7 +23,7 @@ sys          4m42.815s
 
 ```
 
-However, if we want to make uploads of large files (larger than 100MB each) to S3 faster, we can use [Multipart upload](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html). This is a also nice [overview](https://www.linkedin.com/pulse/aws-s3-multipart-upload-using-cli-ravindra-singh/). Multipart upload consists of these [steps](https://aws.amazon.com/blogs/compute/uploading-large-objects-to-amazon-s3-using-multipart-upload-and-transfer-acceleration/)
+However, if we want to make uploads of large files (larger than 100MB each) to S3 faster, we can use [Multipart upload](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html). This is a also nice [overview](https://www.linkedin.com/pulse/aws-s3-multipart-upload-using-cli-ravindra-singh/). Multipart upload consists of these [steps:](https://aws.amazon.com/blogs/compute/uploading-large-objects-to-amazon-s3-using-multipart-upload-and-transfer-acceleration/)
 
 1.    Initiate the multipart upload and obtain an upload id via the CreateMultipartUpload API call.
 
@@ -85,6 +85,10 @@ AWS `complete-multipart-upload` output example:
 `N` = number of parallel parts to uploads simultaneously
 
 `upload_id` = retrievable when executing `create-multipart-upload`
+
+
+TODO:
+1. By using the [MD5 hash](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/s3api/upload-part.html), S3 will return an error if it does not match, meaning there was some corruption. Therefore, we need to check for errors, and re-upload that part
 
 
 

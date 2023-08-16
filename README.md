@@ -1,24 +1,56 @@
 # awsS3-multipart-upload-script
 ## Upload multipart files to AWS S3 using the AWS s3api tool.
 
-When uploading a very large file to AWS S3 (> 100GB), you may wanna split the file and then upload its parts using the [Multipart file Upload](https://docs.aws.amazon.com/cli/latest/reference/s3api/upload-part.html) tool provided by AWS.
+[The total volume of data and number of objects you can store in Amazon S3](https://aws.amazon.com/s3/faqs/) are unlimited. Individual Amazon S3 objects can range in size from a minimum of 0 bytes to a maximum of 5 TB. The largest object that can be uploaded in a single PUT is 5 GB. For objects larger than 100 MB, customers should consider using the multipart upload capability.
+
+To test, I've created a 100GB file in Linux, and timed each upload from different EC2 instances (in the same region as the S3 bucket) of type [r5n](https://aws.amazon.com/ec2/instance-types/r5) - which has 50Gbps of network bandwidth - and on average it took about 5 and a half minutes to upload a large 100GB file.
+
+```
+ec2-user@ip-172-31-36-108 ~]$ time aws s3 cp 100GFile s3://mytestbucket
+upload: ./100GFile to s3://mytestbucket/100GFile
+ 
+real        5m44.163s
+user       9m50.626s
+sys          4m52.425s
+ 
+ 
+[ec2-user@ip-172-31-40-61 ~]$ time aws s3 cp 100GFile2 s3://mytestbucket
+upload: ./100GFile2 to s3://mytestbucket/100GFile2
+ 
+real        5m35.630s
+user       9m38.756s
+sys          4m42.815s
+
+```
+
+However, if we want to make uploads of large files (larger than 100MB each) to S3 faster, we can use [Multipart upload](https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html)
+ 
+Multipart upload consists of these [steps](https://aws.amazon.com/blogs/compute/uploading-large-objects-to-amazon-s3-using-multipart-upload-and-transfer-acceleration/)
+
+1.    Initiate the multipart upload and obtain an upload id via the CreateMultipartUpload API call.
+
+2.    Divide the large object into multiple parts, get a presigned URL for each part, and upload the parts of a large object in parallel via the UploadPart API call.
+
+3.    Complete the upload by calling the CompleteMultipartUpload API call.
+ 
+This is a also nice [overview](https://www.linkedin.com/pulse/aws-s3-multipart-upload-using-cli-ravindra-singh/)
+
+When uploading a very large file to AWS S3 (> 100GB), you may wanna split the file and then upload its parts in parallel  using the [Multipart file Upload](https://docs.aws.amazon.com/cli/latest/reference/s3api/upload-part.html) tool provided by AWS.
 
 That way, if you lose connection for a reason, you'll be able to resume the upload with no problems. Also, using the prefix `--content-md5`, you can check the content of the uploaded file and compare it with your local file.
 
 ### Steps to use this script
 
-1. [Create a multipart upload](https://docs.aws.amazon.com/cli/latest/reference/s3api/create-multipart-upload.html) using the AWS S3 API
-	1. Example: `aws s3api create-multipart-upload --bucket my-bucket --key 'multipart-1'`
-	2. Please, take notes of the `upload_id` and `key` values; you'll need them.
-2. Clone this repo
-3. Set permissions: `chmod +x multipart-file-upload-s3.sh`
-4. Edit `multipart-file-upload-s3.sh` with your requirements - See **variables** below for more information.
-	1. Change `bucket`, `profile`, `upload_id` and `key`.
+1. Create a large 100GB file in Linux with `truncate --size 100G 100GFile`
+2. Split it into 100MB parts with `split -b 100M 100GFile` - this will create lots of files with names that begin with `x`
+3. Clone this repo
+4. Set permissions: `chmod +x multipart-file-upload-s3.sh`
 5. Create the `logs` directory: `cd awsS3-multipart-upload-script && mkdir logs`
-6. Run: `./multipart-file-upload-s3.sh`
-7. Check [AWS documentation](https://docs.aws.amazon.com/cli/latest/reference/s3api/complete-multipart-upload.html) for next step. You'll have to run the `complete-multipart-upload` command.
-
-The script will start reading your `/home/lucas/aws-upload-test/files/x` directory for files, will take the MD5 checksum of them and parse it to the S3 API as the `--content-md5` parameter, and then it will start uploading each file to the specified `bucket`.
+6. Run: `time ./multipartupload.sh LargeFile mybucket 10` - See **variables** below for more information.
+   
+The script will start reading your current directory for files with names that begin with `x`, will take the MD5 checksum of them and parse it to the S3 API as the `--content-md5` parameter, and then it will start uploading each file to the specified `bucket`.
+It uploads parts/files in parallel, set by the value `N`. So if set to 10, it will upload 10 parts at a time. 
+When completed it
 The outputs will be sent to a log file.
 Make sure to save that log file, you'll need the `ETag` output later on.
 
@@ -53,12 +85,14 @@ More information about the `split` command for Linux [here](https://www.linuxtec
 
 ### **Variables:**
 
+`key` = Original large (un-splitted) object key for which the multipart upload has been initiated.
+
 `bucket` = Your S3 bucket name.
 
-`profile` = Your AWS profile (i.e. `aws configure --profile tests3`).
+`N` = number of parallel parts to uploads simultaneously
 
-`upload_id` = Your `upload_id`, retrievable when executing `create-multipart-upload`.
+`upload_id` = retrievable when executing `create-multipart-upload`
 
-`/home/lucas/aws-upload-test/files/x/` = The directory in your HD that contains the splitted files.
 
-`key` = Object key for which the multipart upload has been initiated.
+
+

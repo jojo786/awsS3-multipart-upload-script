@@ -75,7 +75,6 @@ AWS `complete-multipart-upload` output example:
   ]
 }</code>
 
-More information about the `split` command for Linux [here](https://www.linuxtechi.com/split-command-examples-for-linux-unix/).
 
 ### **Variables:**
 

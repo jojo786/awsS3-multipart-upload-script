@@ -3,7 +3,7 @@
 
 [The total volume of data and number of objects you can store in Amazon S3](https://aws.amazon.com/s3/faqs/) is unlimited. Individual Amazon S3 objects can range in size from a minimum of 0 bytes to a maximum of 5 TB. The largest object that can be uploaded in a single PUT is 5 GB. For objects larger than 100 MB, customers should consider using the multipart upload capability.
 
-To test this, I've created a 100GB file in Linux, and timed each upload from different EC2 instances (in the same region as the S3 bucket) of type [r5n](https://aws.amazon.com/ec2/instance-types/r5) - which has 50Gbps of network bandwidth - and on average it took just under 6 minutes to upload a large 100GB file.
+To test the speed of uploading a large file using the standard `aws s3 cp` command, I've created a 100GB file in Linux, and timed each upload from different EC2 instances (in the same region as the S3 bucket) of type [r5n](https://aws.amazon.com/ec2/instance-types/r5) - which has 50Gbps of network bandwidth - and on average it took just under 6 minutes to upload a large 100GB file.
 
 ```
 ec2-user@ip-172-31-36-108 ~]$ time aws s3 cp 100GBFile s3://mytestbucket

@@ -20,7 +20,7 @@ do
   ((part_number = part_number + 1))
   echo "upload part " $part_number
   md5=$(openssl md5 -binary "${f}" | base64)
-  aws s3api upload-part --bucket ${bucket} --key $key --part-number $part_number --body "${f}" --upload-id ${upload_id} --content-md5 "${md5}" | tee -a logs/upload-part.$part_number-s3.log
+  aws s3api upload-part --bucket ${bucket} --key $key --part-number $part_number --body "${f}" --upload-id ${upload_id} --content-md5 "${md5}" | tee -a logs/upload-part.$part_number-s3.log &
   if [[ $(jobs -r -p | wc -l) -ge $N ]]; then wait -n; fi
 done
 

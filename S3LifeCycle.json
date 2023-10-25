@@ -1,0 +1,20 @@
+{
+    "Rules": [
+        {
+            "Filter": {
+                "Prefix": "monthly"
+            },
+            "Status": "Enabled",
+            "Transitions": [
+                {
+                    "Days": 0,
+                    "StorageClass": "DEEP_ARCHIVE"
+                }
+            ],
+            "Expiration": {
+                "Days": 365
+            },
+            "ID": "Monthly: 1-Move To Deep Archive After 0 Days. 2-Expire After 1 Year"
+        }
+    ]
+        }
